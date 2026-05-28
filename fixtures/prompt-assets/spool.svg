@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Blue PLA spool preview">
+  <rect width="256" height="256" rx="28" fill="#0f172a"/>
+  <circle cx="128" cy="128" r="92" fill="#38bdf8"/>
+  <circle cx="128" cy="128" r="68" fill="#0ea5e9"/>
+  <circle cx="128" cy="128" r="34" fill="#0f172a"/>
+  <circle cx="128" cy="128" r="18" fill="#e0f2fe"/>
+  <path d="M76 94c35-24 72-25 105-2" fill="none" stroke="#bae6fd" stroke-width="12" stroke-linecap="round"/>
+  <path d="M67 126c42-25 82-25 122 0" fill="none" stroke="#bae6fd" stroke-width="12" stroke-linecap="round"/>
+  <path d="M76 160c34 24 70 24 105 1" fill="none" stroke="#bae6fd" stroke-width="12" stroke-linecap="round"/>
+  <path d="M182 177c14 10 30 19 48 25" fill="none" stroke="#38bdf8" stroke-width="10" stroke-linecap="round"/>
+</svg>

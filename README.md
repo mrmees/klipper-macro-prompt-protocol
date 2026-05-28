@@ -18,6 +18,7 @@ Draft. The goal is to use this repository as the basis for cross-project discuss
 - [fixtures/fixtures.json](fixtures/fixtures.json) contains renderer-neutral event streams and expected prompt state.
 - [fixtures/macro-examples.cfg](fixtures/macro-examples.cfg) contains Klipper macros for manual frontend testing.
 - [fixtures/README.md](fixtures/README.md) explains how to use the fixture pack.
+- [fixtures/prompt-assets](fixtures/prompt-assets) contains shared example image assets for manual rendering tests.
 
 ## Implementation Targets
 

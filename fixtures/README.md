@@ -38,7 +38,19 @@ Image fixtures reference files under:
 config/prompt-assets/
 ```
 
-The fixture pack does not include binary image assets. For manual testing, place any static PNG, JPEG, or SVG at the referenced paths. The parser tests can validate image item state without fetching the image bytes.
+This repository includes the referenced fixture assets in `fixtures/prompt-assets/`:
+
+- `spool.svg`
+- `nozzle.png`
+- `valid.svg`
+
+For manual testing, copy those files into the printer config path used by Moonraker:
+
+```text
+~/printer_data/config/prompt-assets/
+```
+
+Parser tests can validate image item state without fetching the image bytes, but manual rendering tests should use these files so every frontend is tested against the same image sources.
 
 ## Target-Aware Tests
 

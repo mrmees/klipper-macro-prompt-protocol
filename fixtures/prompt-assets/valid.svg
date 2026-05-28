@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Valid prompt image">
+  <rect width="256" height="256" rx="28" fill="#052e16"/>
+  <circle cx="128" cy="128" r="88" fill="#22c55e"/>
+  <path d="M79 130l31 31 70-78" fill="none" stroke="#ecfdf5" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="128" y="224" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#bbf7d0">VALID</text>
+</svg>
