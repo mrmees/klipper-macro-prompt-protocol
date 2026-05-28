@@ -1,0 +1,59 @@
+# Macro Prompt Protocol Fixtures
+
+These fixtures are the shared Phase 1 contract for implementing Macro Prompt Protocol v1 in KlipperScreen, Fluidd, and Mainsail.
+
+The fixture pack has two audiences:
+
+- frontend tests can replay `fixtures.json` and compare final prompt state;
+- maintainers can copy `macro-examples.cfg` into a Klipper config and inspect rendered prompts manually.
+
+The fixtures intentionally use the received console/action message form:
+
+```text
+// action:prompt_begin Example
+```
+
+Frontends that parse the shorter command form can strip the `// action:` prefix before dispatching.
+
+## Files
+
+- `fixtures.json` contains machine-readable event streams and expected final state.
+- `macro-examples.cfg` contains Klipper macros that emit equivalent prompt command streams.
+
+## Expected State Shape
+
+Each fixture has:
+
+- `events`: ordered action messages to replay;
+- `expected`: final state after all events are processed by a spec-compatible frontend;
+- `notes`: compatibility details that may matter during implementation.
+
+The expected shape is deliberately renderer-neutral. A GTK dialog, Vuetify dialog, or other UI does not need to match visual dimensions. It does need to preserve prompt state, item order, command parsing, fallback values, targeting decisions, and graceful degradation.
+
+## Image Assets
+
+Image fixtures reference files under:
+
+```text
+config/prompt-assets/
+```
+
+The fixture pack does not include binary image assets. For manual testing, place any static PNG, JPEG, or SVG at the referenced paths. The parser tests can validate image item state without fetching the image bytes.
+
+## Target-Aware Tests
+
+`target-touch-only` includes expected visibility for known frontend IDs:
+
+- `klipperscreen`: visible
+- `mainsail`: hidden
+- `fluidd`: hidden
+
+Older frontends that do not support `prompt_target` may still show the prompt. That is allowed by the spec and should be treated as legacy behavior, not fixture failure for target-unaware implementations.
+
+## Portability Notes
+
+- Do not treat unsupported optional commands as fatal.
+- Do not require images to load before prompt content appears.
+- Treat button field pipes as reserved separators.
+- Keep `\|` and `\\` reserved for future escaping; these fixtures do not use them.
+- Treat `PromptMarkup` as a protocol markup language, not HTML or Pango.
