@@ -6,10 +6,10 @@ export function promptView (state: PromptState): PromptView {
   return {
     visible: d.lifecycle === 'shown',
     title: d.title,
-    targets: d.activeTargets,
+    targets: d.activeTargets.slice(),
     size: d.size,
-    items: d.items,
-    footer_buttons: d.footerButtons
+    items: d.items.slice(),
+    footer_buttons: d.footerButtons.slice()
   }
 }
 

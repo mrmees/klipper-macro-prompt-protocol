@@ -7,7 +7,7 @@ import { isValidImagePath } from './image'
 export function initialPromptState (opts: EngineOptions): PromptState {
   return freshIdle(0, {
     frontendId: opts.frontendId,
-    frontendCategories: opts.frontendCategories,
+    frontendCategories: [...opts.frontendCategories],
     liveAppend: opts.liveAppend ?? true
   })
 }

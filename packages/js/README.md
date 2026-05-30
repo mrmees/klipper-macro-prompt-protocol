@@ -24,3 +24,5 @@ const key = (i: number) => `${promptEpoch(state)}:${i}`   // render-key hint
 `promptView()` returns the language-neutral shape defined in SPEC.md §"Normalized Fixture State" —
 the same shape the conformance fixtures assert and the Python port must match. State is an opaque,
 JSON-serializable POJO; store it in Vuex and expose `promptView` via a property getter.
+
+`parseAction` expects raw Moonraker console lines carrying the `// action:` prefix (e.g. `// action:prompt_begin ...`), matching the `event_prefix` field used in the conformance fixtures.
