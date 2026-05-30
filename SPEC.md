@@ -296,6 +296,18 @@ Image loading is best-effort and may be asynchronous. Failed image loads must no
 
 The third field is optional scale. It is an advisory positive finite multiplier. The decimal separator is `.`; values such as `0,35` are invalid. Invalid, non-finite, zero, or negative values are ignored. Frontends may clamp or ignore scale hints according to their layout and device constraints.
 
+Frontends should bound rendered image dimensions so a tall or large image cannot overflow the dialog. The Fluidd and Mainsail implementations fit each image into a square box whose base dimension is tied to the dialog (`prompt_size`) envelope — roughly the dialog width divided by three — and then multiplied by `scale`:
+
+| Dialog size | Image base (scale 1) |
+| --- | --- |
+| `small` | ~133 px |
+| `normal` | ~200 px |
+| `large` | ~267 px |
+| `x-large` | ~333 px |
+| `full-screen` | ~33vw (viewport-relative, tracks window resizing) |
+
+The image is fit within that base × `scale` box with aspect ratio preserved (`object-fit: contain`), so both width and height are bounded. `scale` omitted/invalid means 1. These pixel values are a recommended baseline, not normative — frontends may pick other bounds, but should bound both dimensions rather than render images at intrinsic size.
+
 If scale is needed without alt text, keep the empty alt field:
 
 ```text
