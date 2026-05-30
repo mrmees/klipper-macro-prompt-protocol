@@ -85,7 +85,9 @@ Button label markup is also not part of v1. Button labels remain plain text, and
 
 ## Normalized Fixture State
 
-The fixture pack describes conformance with an abstract normalized prompt state. Implementations do not need to use this JSON shape internally, but a conformant parser/reducer must be able to replay each fixture's `events` and produce equivalent state for the fields asserted by that fixture's `expected` object.
+The fixture pack describes conformance with an abstract normalized prompt state. Implementations do not need to use this JSON shape internally, but a conformant parser/reducer must be able to replay each core fixture's `events` and produce equivalent state for the fields asserted by that fixture's `expected` object.
+
+Optional fixtures apply to implementations that claim the corresponding extension. When a fixture provides `expected_by_frontend`, use the expected state for the implementation's frontend identity instead of the generic `expected` object.
 
 `schema_version` versions this expected-state shape. Additive optional fields do not require a version bump; breaking shape changes such as renamed required fields, removed fields, or changed event interpretation do.
 
@@ -94,8 +96,9 @@ PromptDialog:
   visible: boolean
   title: string
   targets: string[]                 # ["all"] when untargeted
-  size?: "small" | "normal" | "large" | "x-large" | "full-screen"
-                                     # optional; absent means not asserted, not "normal"
+  size?: "small" | "normal" | "large" | "x-large" | "full-screen" | null
+                                     # null means no explicit size hint / frontend default
+                                     # absent means not asserted
   items: PromptItem[]
   footer_buttons: FooterButton[]
 

@@ -495,6 +495,7 @@
       "expected": {
         "visible": true,
         "title": "Empty Size",
+        "size": null,
         "targets": [
           "all"
         ],
@@ -521,6 +522,7 @@
       "expected": {
         "visible": true,
         "title": "Unknown Size",
+        "size": null,
         "targets": [
           "all"
         ],
@@ -637,6 +639,7 @@
       "expected": {
         "visible": true,
         "title": "Clean Baseline",
+        "size": null,
         "targets": [
           "all"
         ],
@@ -668,6 +671,7 @@
         "fluidd": {
           "visible": true,
           "title": "Visible Default",
+          "size": null,
           "targets": [
             "all"
           ],
@@ -682,6 +686,7 @@
         "klipperscreen": {
           "visible": true,
           "title": "Visible Default",
+          "size": null,
           "targets": [
             "all"
           ],
