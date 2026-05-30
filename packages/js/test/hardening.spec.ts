@@ -152,3 +152,29 @@ describe('markup tag-name case sensitivity', () => {
     ])
   })
 })
+
+// Test 8 — promptView must not depend on structuredClone (older-runtime safe, e.g. Safari 12)
+describe('promptView old-runtime safety', () => {
+  it('still deep-clones the view when structuredClone is unavailable', () => {
+    const saved = (globalThis as Record<string, unknown>).structuredClone
+    delete (globalThis as Record<string, unknown>).structuredClone
+    try {
+      const s = run([
+        '// action:prompt_begin T',
+        '// action:prompt_row_start',
+        '// action:prompt_text child',
+        '// action:prompt_row_end',
+        '// action:prompt_show'
+      ])
+      const v = promptView(s)
+      expect(v.items[0]).toEqual({ type: 'row', children: [{ type: 'text', text: 'child' }] })
+      // and the returned view is still a deep copy (mutation does not corrupt state)
+      const row = v.items[0]
+      if (row.type === 'row') (row.children[0] as any).text = 'X'
+      const row2 = promptView(s).items[0]
+      if (row2.type === 'row') expect((row2.children[0] as any).text).toBe('child')
+    } finally {
+      ;(globalThis as Record<string, unknown>).structuredClone = saved
+    }
+  })
+})
