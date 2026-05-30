@@ -31,6 +31,43 @@ describe('view immutability', () => {
   })
 })
 
+// Test 1b — deep view immutability: mutating nested fields must not corrupt state
+describe('deep view immutability', () => {
+  it('mutating a top-level item text does not corrupt subsequent promptView calls', () => {
+    const s = run([
+      '// action:prompt_begin T',
+      '// action:prompt_text Hello',
+      '// action:prompt_show'
+    ])
+    const v1 = promptView(s)
+    ;(v1.items[0] as any).text = 'X'   // mutate returned item in-place
+    const v2 = promptView(s)
+    expect((v2.items[0] as any).text).toBe('Hello')
+  })
+
+  it('mutating a row children array does not corrupt subsequent promptView calls', () => {
+    const s = run([
+      '// action:prompt_begin T',
+      '// action:prompt_row_start',
+      '// action:prompt_text Inside row',
+      '// action:prompt_row_end',
+      '// action:prompt_show'
+    ])
+    const v1 = promptView(s)
+    const row = v1.items[0]
+    if (row.type === 'row') {
+      row.children.push({ type: 'text', text: 'INJECTED' } as any)
+    }
+    const v2 = promptView(s)
+    const row2 = v2.items[0]
+    expect(row2.type).toBe('row')
+    if (row2.type === 'row') {
+      expect(row2.children).toHaveLength(1)
+      expect(row2.children.map(c => (c as any).text)).not.toContain('INJECTED')
+    }
+  })
+})
+
 // Test 2 — markupToPlainText importable from barrel
 describe('markupToPlainText barrel export', () => {
   it('is importable from the package barrel and converts markup to plain text', () => {

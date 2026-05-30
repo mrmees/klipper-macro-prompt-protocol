@@ -1,4 +1,4 @@
-import type { MarkupNode, PromptTextSize } from './types'
+import type { MarkupNode, PromptTextSize } from './types.js'
 
 const SIZES: readonly string[] = ['small', 'normal', 'large', 'x-large']
 const TEXT_TAGS: readonly string[] = ['b', 'i', 'u']

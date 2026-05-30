@@ -60,7 +60,7 @@ export interface EngineOptions {
 
 // ---- Opaque, JSON-serializable state ---------------------------------------
 declare const PROMPT_STATE_BRAND: unique symbol
-export type PromptState = PromptStateData & { readonly [PROMPT_STATE_BRAND]: true }
+export interface PromptState { readonly [PROMPT_STATE_BRAND]: 'PromptState' }
 
 // Internal shape (not part of the public contract; reached only via promptView/promptEpoch).
 export interface PromptStateData {

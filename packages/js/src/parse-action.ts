@@ -1,7 +1,7 @@
-import type { PromptEvent, PromptSize } from './types'
-import { parseButtonFields } from './button'
-import { parseImageScale } from './image'
-import { markupToPlainText } from './markup'
+import type { PromptEvent, PromptSize } from './types.js'
+import { parseButtonFields } from './button.js'
+import { parseImageScale } from './image.js'
+import { markupToPlainText } from './markup.js'
 
 const SIZES: readonly PromptSize[] = ['small', 'normal', 'large', 'x-large', 'full-screen']
 const PREFIX = '// action:prompt_'

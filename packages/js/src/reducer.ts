@@ -1,8 +1,8 @@
 import type {
   EngineOptions, PromptEvent, PromptItem, PromptInlineItem, PromptButtonItem,
   PromptState, PromptStateData
-} from './types'
-import { isValidImagePath } from './image'
+} from './types.js'
+import { isValidImagePath } from './image.js'
 
 export function initialPromptState (opts: EngineOptions): PromptState {
   return freshIdle(0, {
@@ -27,7 +27,7 @@ function targetsMatch (targets: string[], opts: Required<EngineOptions>): boolea
 }
 
 export function reducePrompt (state: PromptState, event: PromptEvent): PromptState {
-  const d = state as PromptStateData
+  const d = state as unknown as PromptStateData
 
   switch (event.kind) {
     case 'target': return patch(d, { pendingTargets: event.targets })
@@ -46,7 +46,7 @@ export function reducePrompt (state: PromptState, event: PromptEvent): PromptSta
         title: event.title,
         size: d.pendingSize,
         activeTargets: targets
-      } as PromptState
+      } as unknown as PromptState
     }
     case 'show':
       return d.lifecycle === 'building' ? patch(d, { lifecycle: 'shown' }) : state
@@ -78,27 +78,27 @@ export function reducePrompt (state: PromptState, event: PromptEvent): PromptSta
 }
 
 function patch (d: PromptStateData, p: Partial<PromptStateData>): PromptState {
-  return { ...d, ...p } as PromptState
+  return { ...d, ...p } as unknown as PromptState
 }
 
 function openContainer (d: PromptStateData, kind: 'row' | 'button_group'): PromptState {
-  if (d.activeContainer !== null) return d as PromptState   // already open: ignore nested start
+  if (d.activeContainer !== null) return d as unknown as PromptState   // already open: ignore nested start
   const empty: PromptItem = kind === 'row' ? { type: 'row', children: [] } : { type: 'button_group', children: [] }
   return patch(d, { activeContainer: kind, items: [...d.items, empty] })
 }
 
 function closeContainer (d: PromptStateData, kind: 'row' | 'button_group'): PromptState {
-  if (d.activeContainer !== kind) return d as PromptState   // stray end: ignore
+  if (d.activeContainer !== kind) return d as unknown as PromptState   // stray end: ignore
   return patch(d, { activeContainer: null })
 }
 
 function appendContent (d: PromptStateData, item: PromptItem): PromptState {
   if (d.activeContainer === 'row') {
-    if (item.type === 'row' || item.type === 'button_group') return d as PromptState
+    if (item.type === 'row' || item.type === 'button_group') return d as unknown as PromptState
     return appendToLastContainer(d, item as PromptInlineItem)
   }
   if (d.activeContainer === 'button_group') {
-    if (item.type !== 'button') return d as PromptState
+    if (item.type !== 'button') return d as unknown as PromptState
     return appendToLastContainer(d, item as PromptButtonItem)
   }
   return patch(d, { items: [...d.items, item] })
@@ -107,7 +107,7 @@ function appendContent (d: PromptStateData, item: PromptItem): PromptState {
 function appendToLastContainer (d: PromptStateData, child: PromptInlineItem | PromptButtonItem): PromptState {
   const items = d.items.slice()
   const last = items[items.length - 1]
-  if (!last || (last.type !== 'row' && last.type !== 'button_group')) return d as PromptState
+  if (!last || (last.type !== 'row' && last.type !== 'button_group')) return d as unknown as PromptState
   items[items.length - 1] = { ...last, children: [...(last as any).children, child] } as PromptItem
   return patch(d, { items })
 }

@@ -1,5 +1,5 @@
-import type { PromptStyle } from './types'
-import { normalizeStyle } from './style'
+import type { PromptStyle } from './types.js'
+import { normalizeStyle } from './style.js'
 
 export interface ButtonFields { label: string; gcode: string; style: PromptStyle }
 

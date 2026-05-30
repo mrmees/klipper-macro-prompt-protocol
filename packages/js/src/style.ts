@@ -1,4 +1,4 @@
-import type { PromptStyle } from './types'
+import type { PromptStyle } from './types.js'
 
 const STYLES: readonly PromptStyle[] = ['primary', 'secondary', 'info', 'warning', 'error', 'success']
 
