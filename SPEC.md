@@ -141,6 +141,12 @@ There is no v1 command to remove or replace an individual item. To replace promp
 
 Frontends must close active prompts on Klipper or Moonraker disconnect.
 
+Disconnect is modeled as an explicit reset, distinct from `prompt_end`: it clears the active prompt,
+any pending `prompt_target`/`prompt_size`, and any open `row`/`button_group` container, returning the
+prompt to the idle, visible-to-all baseline. Reconnect recovery is reset-then-replay: a frontend
+rebuilds prompt state from buffered console history starting from a fresh state, never by diffing
+against retained state.
+
 User-initiated dismissal must come from an explicit action on the prompt itself: a dedicated close control (such as a close button on the prompt's own chrome) or a footer button whose gcode emits `prompt_end`. Frontends must not broadcast `prompt_end` as a side effect of unrelated UI events, such as the Escape key closing a different modal, a backdrop click on an adjacent dialog, or routing changes that close other application chrome. Because `prompt_end` is broadcast to all connected clients, accidental dismissal on one frontend would close the prompt on every other connected frontend. Supporting frontends should prefer persistent/modal dialog implementations that require explicit user action to dismiss.
 
 Local lifecycle events on the frontend — browser refresh, tab or window close, app unmount, page navigation, or any client-side teardown — must not emit `prompt_end`. These are local-only events. The active prompt is closed locally because the frontend is going away; emitting `prompt_end` would close the prompt on every other connected client as well. The protocol does not require prompt persistence across reconnects. A reconnecting frontend may reconstruct prompt state from retained console/gcode-store history where that is available, but clients should not depend on another frontend preserving or replaying prompt state.
@@ -363,7 +369,9 @@ Supporting frontends are recommended to render row items as equal-width cells wi
 
 Unsupported row commands are ignored; contained items render in source order as normal block items. Rows may contain plain text, markup, images, and inline buttons. Footer buttons remain outside rows.
 
-Rows must not be nested. Rows and button groups must not be nested inside each other in v1. If invalid nesting occurs, frontends may ignore inner grouping commands while preserving the contained content items in source order.
+Rows must not be nested. Rows and button groups must not be nested inside each other in v1. Malformed container commands degrade deterministically: a `row_end` or `button_group_end` with no
+matching open container is ignored; a `row_start`/`button_group_start` while a container is already
+open is ignored (its inner content items still append to the already-open container, in source order).
 
 ## Button Groups
 
