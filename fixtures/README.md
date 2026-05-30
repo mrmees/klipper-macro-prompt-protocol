@@ -30,6 +30,10 @@ Each fixture has:
 
 The expected shape is deliberately renderer-neutral. A GTK dialog, Vuetify dialog, or other UI does not need to match visual dimensions. It does need to preserve prompt state, item order, command parsing, fallback values, targeting decisions, and graceful degradation.
 
+## Schema Versioning
+
+`schema_version: 1` allows additive optional fields in `expected`. Implementations consuming fixtures must ignore unknown fields they do not yet support, and treat absent fields as "not asserted by this fixture" — not as "must equal default". This lets the fixture pack grow alongside new optional extensions (`prompt_size`, future hints) without forcing a major schema bump every time the protocol gains a per-prompt metadata field. A schema_version bump is reserved for breaking shape changes such as renamed required fields, removed fields, or changes in event-stream interpretation.
+
 ## Image Assets
 
 Image fixtures reference files under:
