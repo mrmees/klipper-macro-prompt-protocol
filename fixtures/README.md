@@ -26,9 +26,10 @@ Each fixture has:
 
 - `events`: ordered action messages to replay;
 - `expected`: final state after all events are processed by a spec-compatible frontend;
+- `expected_by_frontend`: optional frontend-specific expected states when target filtering changes visibility;
 - `notes`: compatibility details that may matter during implementation.
 
-The expected shape is deliberately renderer-neutral. A GTK dialog, Vuetify dialog, or other UI does not need to match visual dimensions. It does need to preserve prompt state, item order, command parsing, fallback values, targeting decisions, and graceful degradation.
+The expected shape is deliberately renderer-neutral. A GTK dialog, Vuetify dialog, or other UI does not need to match visual dimensions. It does need to preserve prompt state, item order, command parsing, fallback values, targeting decisions, and graceful degradation. `SPEC.md` defines the normalized fixture state; frontends do not need to use that shape internally, but their parser/reducer output must be comparable to it for conformance tests.
 
 ## Schema Versioning
 

@@ -43,9 +43,9 @@ Each command is one line. Command arguments are UTF-8 text, and frontends must n
 
 The proposal separates the base agreement from richer optional features so maintainers can adopt the protocol in stages.
 
-Core v1 conformance covers the transport, core commands, lifecycle, live appends after `prompt_show`, button parsing, button execution, semantic styles, disconnect behavior, and graceful handling of unknown commands.
+Core v1 conformance covers the transport, core commands, lifecycle through `prompt_show`, button parsing, button execution, semantic styles, disconnect behavior, and graceful handling of unknown commands.
 
-Optional v1 extensions cover targeting, prompt size, button groups, rows, images, and PromptMarkup. These are part of the shared direction, but they should not block agreement on the core protocol.
+Optional v1 extensions cover live appends after `prompt_show`, targeting, prompt size, button groups, rows, images, and PromptMarkup. These are part of the shared direction, but they should not block agreement on the core protocol.
 
 ## Core Commands
 
@@ -83,15 +83,56 @@ prompt_markup <markup>
 
 Button label markup is also not part of v1. Button labels remain plain text, and button appearance is controlled by semantic styles.
 
+## Normalized Fixture State
+
+The fixture pack describes conformance with an abstract normalized prompt state. Implementations do not need to use this JSON shape internally, but a conformant parser/reducer must be able to replay each fixture's `events` and produce equivalent state for the fields asserted by that fixture's `expected` object.
+
+`schema_version` versions this expected-state shape. Additive optional fields do not require a version bump; breaking shape changes such as renamed required fields, removed fields, or changed event interpretation do.
+
+```text
+PromptDialog:
+  visible: boolean
+  title: string
+  targets: string[]                 # ["all"] when untargeted
+  size?: "small" | "normal" | "large" | "x-large" | "full-screen"
+                                     # optional; absent means not asserted, not "normal"
+  items: PromptItem[]
+  footer_buttons: FooterButton[]
+
+PromptItem:
+  { type: "text", text: string }
+  { type: "markup", markup: string, plain_text: string }
+  { type: "image", path: string, alt: string, scale: number | null }
+  { type: "button", label: string, gcode: string, style: Style }
+  { type: "row", children: InlineItem[] }
+  { type: "button_group", children: ButtonItem[] }
+
+InlineItem:
+  text | markup | image | button
+
+ButtonItem:
+  button
+
+FooterButton:
+  { label: string, gcode: string, style: Style }
+
+Style:
+  "primary" | "secondary" | "info" | "warning" | "error" | "success"
+```
+
+`markup` preserves the raw PromptMarkup string. `plain_text` is the decoded fallback text for clients that do not render rich text. The normalized state deliberately excludes implementation-only fields such as renderer keys, stable item IDs, reducer machine state, and parsed markup ASTs.
+
 ## Lifecycle
 
 `prompt_begin` starts a new prompt definition. If a prompt is already being built or displayed, the new prompt replaces it. Prompt content commands received before `prompt_begin` are ignored, except for `prompt_target` and `prompt_size`, which both apply to the next prompt.
 
-`prompt_show` makes the current prompt visible but does not finalize it. Supported content commands received after `prompt_show` are appended live in source order. Repeating `prompt_show` while the prompt is visible is a no-op.
+`prompt_show` makes the current prompt visible. Repeating `prompt_show` while the prompt is visible is a no-op.
+
+Live appends after `prompt_show` are an optional v1 capability. The portable core baseline is that all content needed for the prompt's initial meaning appears before `prompt_show`. Frontends that support live appends update the visible prompt as later supported content commands arrive. Frontends that snapshot at `prompt_show` may ignore later content until they adopt the live-append capability or a shared reducer that preserves shown-state appends.
 
 `prompt_show` before `prompt_begin` is a no-op.
 
-`prompt_end` closes and clears the current prompt whether it has been shown or is still being built. `prompt_end` when no prompt exists is a no-op.
+`prompt_end` closes and clears the current prompt whether it has been shown or is still being built. `prompt_end` also clears pending pre-begin metadata such as `prompt_target` and `prompt_size`. When no prompt exists and no metadata is pending, `prompt_end` is a no-op.
 
 There is no v1 command to remove or replace an individual item. To replace prompt content, emit a new `prompt_begin` and rebuild the prompt.
 
@@ -99,9 +140,9 @@ Frontends must close active prompts on Klipper or Moonraker disconnect.
 
 User-initiated dismissal must come from an explicit action on the prompt itself: a dedicated close control (such as a close button on the prompt's own chrome) or a footer button whose gcode emits `prompt_end`. Frontends must not broadcast `prompt_end` as a side effect of unrelated UI events, such as the Escape key closing a different modal, a backdrop click on an adjacent dialog, or routing changes that close other application chrome. Because `prompt_end` is broadcast to all connected clients, accidental dismissal on one frontend would close the prompt on every other connected frontend. Supporting frontends should prefer persistent/modal dialog implementations that require explicit user action to dismiss.
 
-Local lifecycle events on the frontend — browser refresh, tab or window close, app unmount, page navigation, or any client-side teardown — must not emit `prompt_end`. These are local-only events. The active prompt is closed locally because the frontend is going away; emitting `prompt_end` would close the prompt on every other connected client as well. If the frontend reconnects, the prompt state is already maintained by Klipper's broadcast model: the frontend either re-derives state from the gcode store (where supported) or treats the prompt as recovered on the next received command.
+Local lifecycle events on the frontend — browser refresh, tab or window close, app unmount, page navigation, or any client-side teardown — must not emit `prompt_end`. These are local-only events. The active prompt is closed locally because the frontend is going away; emitting `prompt_end` would close the prompt on every other connected client as well. The protocol does not require prompt persistence across reconnects. A reconnecting frontend may reconstruct prompt state from retained console/gcode-store history where that is available, but clients should not depend on another frontend preserving or replaying prompt state.
 
-Compatibility note: KlipperScreen and Fluidd currently support live appends after `prompt_show`. Mainsail currently renders a snapshot of content before `prompt_show`. Adopting core v1 would require Mainsail to change that behavior, so this should be called out explicitly in the maintainer discussion.
+Compatibility note: KlipperScreen and the Fluidd reference implementation support live appends after `prompt_show`. Current Mainsail renders a snapshot of content before `prompt_show`; its `activePrompt` reconstruction excludes later prompt commands from rendered state. A shared parser/reducer could make this a renderer timing policy over the same normalized state, but current Mainsail behavior should be reviewed explicitly before live appends are promoted beyond optional v1.
 
 ## Targeting
 
@@ -143,7 +184,7 @@ If `prompt_target` is present but its argument is empty, whitespace-only, or con
 prompt_size <size>
 ```
 
-Supported size values are `small`, `normal`, `large`, `x-large`, and `full-screen`. Values are compared case-insensitively. Missing, empty, or unknown size arguments normalize to `normal`.
+Supported size values are `small`, `normal`, `large`, `x-large`, and `full-screen`. Values are compared case-insensitively. Missing, empty, or unknown size arguments mean "no explicit size hint"; the prompt renders at the frontend default. This replaces any previously pending size hint, so a bad or empty `prompt_size` does not leak an earlier size into the next prompt.
 
 `prompt_size` applies to the next `prompt_begin` and is consumed when that prompt begins. If omitted, the prompt opens at the frontend's default size, conventionally `normal`. If multiple `prompt_size` commands are received before `prompt_begin`, the last one wins. `prompt_size` received during an active prompt applies only to the next prompt, not the current one.
 
@@ -362,7 +403,7 @@ Button gcode is intentionally macro-authored command execution. This protocol do
 
 ## Macro Author Guidance
 
-Put useful baseline content before `prompt_show`, even though live appends are supported.
+Put useful baseline content before `prompt_show`. Live appends are optional, so portable prompts should not depend on post-show content for their initial meaning.
 
 Use `prompt_text` when formatting is not needed. Use `prompt_markup` for concise emphasis, but do not make the prompt depend entirely on color.
 
@@ -408,31 +449,31 @@ The protocol intentionally has no per-client routing or "already answered" state
 
 The following ideas were discussed during initial design and deferred from v1. They are recorded here so future revisions can resume the design conversation without losing context. They are NOT part of the v1 protocol. Frontends should not implement them based on this section, and macros should not depend on them.
 
-### Per-item alignment (`prompt_align`)
+### Per-item alignment
 
 Discussed 2026-05-29 during the Fluidd reference implementation design and deferred. Frontends should NOT implement this based on this section; it is design context only, not a forward commitment.
 
 Rationale for deferral: prompt content is, by convention, presented in a prominent display context that already defaults to centered horizontal and vertical alignment for individual items. The motivating use case — fine-grained per-item layout polish — is therefore not a generally-felt pain. When macro authors do need richer composition (e.g., a label-then-value horizontal layout, or padding to push content into a particular cell), the existing `row` primitive composes naturally: multiple rows, padded with empty-string text items or blank images, give authors layout control without protocol surface growth. Authors who want that level of polish are also the authors most willing to spend effort composing it from existing primitives.
 
-If a future revision revisits this, the natural shape is a single line command (`prompt_align <left|center|right>`) consumed at the next top-level content item, ignored inside row and button_group containers. This is illustrative only.
+If a future revision revisits this, it should define requirements and compatibility constraints before choosing command syntax.
 
 ## Observed Current Support
 
-This table is based on source review on 2026-05-28 (KlipperScreen, Mainsail) and the Fluidd reference implementation as of 2026-05-29. It should be corrected by maintainers if inaccurate.
+This table is based on source review on 2026-05-28 (KlipperScreen, Mainsail, and Fluidd upstream/current) plus the Fluidd reference implementation as of 2026-05-29. It should be corrected by maintainers if inaccurate.
 
-| Feature | KlipperScreen | Mainsail | Fluidd |
-| --- | --- | --- | --- |
-| Core prompt commands | Yes | Yes | Yes |
-| Live appends after `prompt_show` | Yes | No, snapshot on show | Yes (ref impl) |
-| Button groups | Yes | Yes | Yes (ref impl) |
-| Rows | In KlipperScreen markup experiment | No | Yes (ref impl) |
-| Images | In KlipperScreen prompt image work | No | Yes (ref impl) |
-| Image scale | In KlipperScreen prompt image work as standalone command | No | Yes (ref impl) |
-| Markup | In KlipperScreen markup experiment | No | Yes (ref impl) |
-| Target filtering | No | No | Yes (ref impl) |
-| Prompt size (envelope) | No | No | Yes (ref impl, incl. `full-screen`) |
-| Equal-width-cells row/group layout convention | Unknown | Unknown | Yes (ref impl) |
-| Explicit-dismissal-only dialog convention | Unknown | Unknown | Yes (ref impl) |
+| Feature | KlipperScreen current | Mainsail current | Fluidd current | Fluidd reference branch |
+| --- | --- | --- | --- | --- |
+| Core prompt commands | Yes | Yes | Yes | Yes |
+| Live appends after `prompt_show` | Yes | No, snapshot on show | Yes | Yes |
+| Button groups | Yes | Yes | No | Yes |
+| Rows | In KlipperScreen markup experiment | No | No | Yes |
+| Images | In KlipperScreen prompt image work | No | No | Yes |
+| Image scale | In KlipperScreen prompt image work as standalone command | No | No | Yes |
+| Markup | In KlipperScreen markup experiment | No | No | Yes |
+| Target filtering | No | No | No | Yes |
+| Prompt size (envelope) | No | No | No | Yes, incl. `full-screen` |
+| Equal-width-cells row/group layout convention | Unknown | Unknown | Unknown | Yes |
+| Explicit-dismissal-only dialog convention | Unknown | Unknown | Unknown | Yes |
 
 The Fluidd reference implementation lives on `mrmees/fluidd` branch `feat/macro-prompt-protocol-v1`. It implements core v1, all optional v1 extensions, and `prompt_size`. It is not (yet) proposed for merge into upstream `fluidd`.
 
@@ -446,7 +487,7 @@ Observed behavior references:
 
 ## Proposed Rollout
 
-Canonical home: `mrmees/klipper-macro-prompt-protocol`. This document is the v1 draft hosted there. Fixtures and macro examples live alongside it under `fixtures/`.
+Current draft home: `mrmees/klipper-macro-prompt-protocol`. This document is the v1 draft hosted there. Fixtures and macro examples live alongside it under `fixtures/`. A permanent canonical home should be decided after cross-frontend maintainer agreement.
 
 Open a discussion-style issue titled "Cross-frontend prompt protocol v1: align existing action:prompt_* semantics" and cross-link it from KlipperScreen, Mainsail, and Fluidd. The proposer should file the initial issue and link this spec from each project. The Fluidd reference implementation (`mrmees/fluidd` branch `feat/macro-prompt-protocol-v1`) is available as a working artifact to ground the discussion.
 
@@ -455,6 +496,6 @@ The issue should focus on the shared spec first, not code changes. The asks are:
 - Confirm the compatibility table.
 - Identify behavior changes each frontend would need.
 - Agree on core vs optional commands.
-- Agree on ambiguity fixes: lifecycle, live appends, button defaults, pipe reservation, image fields, image path scope, markup grammar, row semantics, targeting, prompt size, dismissal semantics, equal-width-cells layout convention for rows/button_groups, and the recommended restart-resumption pattern via `[delayed_gcode]`.
+- Agree on ambiguity fixes: lifecycle, live-append capability level, button defaults, pipe reservation, image fields, image path scope, markup grammar, row semantics, targeting, prompt size, dismissal semantics, equal-width-cells layout convention for rows/button_groups, normalized fixture state, and the recommended restart-resumption pattern via `[delayed_gcode]`.
 
 After maintainers agree on the spec, each frontend can open implementation PRs against its own codebase.
