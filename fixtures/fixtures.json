@@ -781,6 +781,93 @@
         ],
         "footer_buttons": []
       }
+    },
+    {
+      "id": "alignment-left-applies-to-subsequent-items",
+      "level": "optional",
+      "extension": "alignment",
+      "description": "prompt_align left stamps subsequent top-level items with align:left; center items omit the field.",
+      "events": [
+        "// action:prompt_begin Alignment Test",
+        "// action:prompt_align left",
+        "// action:prompt_text Left-aligned line",
+        "// action:prompt_markup <b>Also left</b>",
+        "// action:prompt_align center",
+        "// action:prompt_text Back to center",
+        "// action:prompt_show"
+      ],
+      "expected": {
+        "visible": true,
+        "title": "Alignment Test",
+        "targets": ["all"],
+        "items": [
+          { "type": "text", "text": "Left-aligned line", "align": "left" },
+          { "type": "markup", "markup": "<b>Also left</b>", "plain_text": "Also left", "align": "left" },
+          { "type": "text", "text": "Back to center" }
+        ],
+        "footer_buttons": []
+      },
+      "notes": [
+        "Items with align:left carry the optional align field. Items at center alignment omit the field (center is the default). This keeps the extension additive: existing fixtures using toMatchObject remain valid.",
+        "This is how the Fluidd and Mainsail implementations apply prompt_align."
+      ]
+    },
+    {
+      "id": "alignment-resets-at-begin",
+      "level": "optional",
+      "extension": "alignment",
+      "description": "prompt_align state resets to center at each prompt_begin; align from a prior prompt does not bleed through.",
+      "events": [
+        "// action:prompt_begin First Prompt",
+        "// action:prompt_align right",
+        "// action:prompt_text Right-aligned",
+        "// action:prompt_show",
+        "// action:prompt_begin Second Prompt",
+        "// action:prompt_text Should be center",
+        "// action:prompt_show"
+      ],
+      "expected": {
+        "visible": true,
+        "title": "Second Prompt",
+        "targets": ["all"],
+        "items": [
+          { "type": "text", "text": "Should be center" }
+        ],
+        "footer_buttons": []
+      },
+      "notes": [
+        "The second prompt's item has no align field because alignment resets to center at prompt_begin.",
+        "This is how the Fluidd and Mainsail implementations apply prompt_align."
+      ]
+    },
+    {
+      "id": "alignment-unknown-ignored",
+      "level": "optional",
+      "extension": "alignment",
+      "description": "Unknown prompt_align values are silently ignored; the current alignment is preserved.",
+      "events": [
+        "// action:prompt_begin Unknown Align",
+        "// action:prompt_align right",
+        "// action:prompt_align justify",
+        "// action:prompt_text Still right",
+        "// action:prompt_align",
+        "// action:prompt_text Also still right",
+        "// action:prompt_show"
+      ],
+      "expected": {
+        "visible": true,
+        "title": "Unknown Align",
+        "targets": ["all"],
+        "items": [
+          { "type": "text", "text": "Still right", "align": "right" },
+          { "type": "text", "text": "Also still right", "align": "right" }
+        ],
+        "footer_buttons": []
+      },
+      "notes": [
+        "Both an unknown keyword ('justify') and an empty argument leave the current alignment unchanged.",
+        "This is how the Fluidd and Mainsail implementations apply prompt_align."
+      ]
     }
   ]
 }
