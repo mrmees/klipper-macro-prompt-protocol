@@ -45,7 +45,7 @@ The proposal separates the base agreement from richer optional features so maint
 
 Core v1 conformance covers the transport, core commands, lifecycle through `prompt_show`, button parsing, button groups, button execution, semantic styles, disconnect behavior, and graceful handling of unknown commands.
 
-Optional v1 extensions cover live appends after `prompt_show`, targeting, prompt size, rows, images, and PromptMarkup. These are part of the shared direction, but they should not block agreement on the core protocol.
+Optional v1 extensions cover live appends after `prompt_show`, targeting, prompt size, rows, images, PromptMarkup, and per-item alignment (`prompt_align`). These are part of the shared direction, but they should not block agreement on the core protocol.
 
 ## Core Commands
 
@@ -75,6 +75,7 @@ prompt_row_start
 prompt_row_end
 prompt_image <config-path>|<alt-text>|<scale>
 prompt_markup <markup>
+prompt_align <left|center|right>
 ```
 
 `prompt_text_scale` is intentionally not part of the shared v1 protocol. Rich text size is handled by `prompt_markup`. KlipperScreen may keep `prompt_text_scale` as a local compatibility alias, but macros intended for multiple frontends should use markup sizes.
@@ -378,7 +379,7 @@ Layout features change the arrangement *within* that centered default, and are t
 - `prompt_button_group_*` lays grouped buttons out as equal-width cells (see Button Groups).
 - Footer buttons (`prompt_footer_button`) render in a separate action bar, outside the centered content flow (see Button Parsing and Behavior).
 
-Vertical alignment and overall dialog placement are frontend/display conventions and are not specified by v1. A future `prompt_align` extension (see Future Considerations) may add per-item horizontal control; until it exists, centered is the assumed default and portable macros must not depend on any other per-item alignment.
+Vertical alignment and overall dialog placement are frontend/display conventions and are not specified by v1. `prompt_align` is the optional v1 extension that changes per-item horizontal alignment; without it, centered is the assumed default and portable macros must not depend on any other per-item alignment.
 
 ## Rows
 
@@ -419,6 +420,48 @@ Frontends render grouped buttons together while preserving the source order of t
 Frontends are recommended to render grouped buttons with consistent equal-width sizing across the group. This convention improves consistency on clients that adopt it — a `+10 / +1 / -1 / -10` jog cluster reads as one unit of related controls. Portable prompts must remain usable if a frontend chooses a different layout. Frontends with strong local conventions may deviate.
 
 Button groups must not be nested. Button groups and rows must not be nested inside each other in v1. If invalid nesting occurs, frontends may ignore inner grouping commands while preserving the contained content items in source order.
+
+## Prompt Alignment
+
+`prompt_align` is an optional v1 extension that sets the horizontal alignment applied to subsequent top-level prompt content items.
+
+```text
+prompt_align <left|center|right>
+```
+
+**Sticky semantics.** Once set, the alignment applies to every top-level content item emitted after it, until the next `prompt_align` command or the next `prompt_begin`.
+
+**Default is center.** The initial alignment state is `center`. `prompt_begin` resets alignment to `center` regardless of what any prior prompt used. The reset ensures a new prompt cannot inherit layout state left over from a previous macro.
+
+**Unknown or empty values are ignored.** If the argument is missing, whitespace-only, or not one of `left`, `center`, or `right` (compared case-insensitively), the command is silently ignored and the current alignment is preserved unchanged. This differs from `prompt_size`, where an invalid value clears the pending size hint; preserving alignment avoids an accidental layout reset from a typo.
+
+**Top-level items only.** `prompt_align` stamps alignment on top-level content items (text, markup, image, button, row, button_group). Items inside a `row` or `button_group` container are not individually stamped. Row and button_group cells follow the equal-width-cells centering convention independently of the surrounding prompt alignment.
+
+**Normalized output.** In the normalized item shape, alignment is expressed via an optional `align` field (`"left"` or `"right"`). The field is omitted when the item is at the default `center` alignment. This keeps the extension additive: fixtures written before `prompt_align` was added continue to match via `toMatchObject` without modification, and `schema_version` does not need to bump.
+
+```text
+{ type: "text", text: "...", align: "left" }    -- left-aligned
+{ type: "text", text: "...", align: "right" }   -- right-aligned
+{ type: "text", text: "..." }                   -- center (field absent)
+```
+
+Example:
+
+```text
+prompt_begin My Prompt
+prompt_align left
+prompt_text This line is left-aligned.
+prompt_markup <b>So is this.</b>
+prompt_align center
+prompt_text Back to center.
+prompt_align right
+prompt_text Right-aligned line.
+prompt_show
+```
+
+Frontends that do not implement `prompt_align` safely ignore it (the command returns no event or is treated as an unknown extension command), and items render at the frontend's default alignment.
+
+This is how the Fluidd and Mainsail implementations apply horizontal per-item alignment. This section formalizes that shared behavior so it can be ratified across frontends.
 
 ## Multi-Frontend Behavior
 
@@ -488,14 +531,6 @@ The protocol intentionally has no per-client routing or "already answered" state
 
 The following ideas were discussed during initial design and deferred from v1. They are recorded here so future revisions can resume the design conversation without losing context. They are NOT part of the v1 protocol. Frontends should not implement them based on this section, and macros should not depend on them.
 
-### Per-item alignment
-
-Discussed 2026-05-29 during the Fluidd reference implementation design and deferred. Frontends should NOT implement this based on this section; it is design context only, not a forward commitment.
-
-Rationale for deferral: per Alignment and Layout Defaults, individual items already default to centered alignment, so the motivating use case — fine-grained per-item layout polish — is not a generally-felt pain. When macro authors do need richer composition (e.g., a label-then-value horizontal layout, or padding to push content into a particular cell), the existing `row` primitive composes naturally: multiple rows, padded with empty-string text items or blank images, give authors layout control without protocol surface growth. Authors who want that level of polish are also the authors most willing to spend effort composing it from existing primitives.
-
-If a future revision revisits this, it should define requirements and compatibility constraints before choosing command syntax.
-
 ### Prompt inputs
 
 Discussed 2026-05-30 after reviewing the existing Mainsail experimental prompt-input work. `prompt_input` is reserved as a possible future optional extension so future designs do not accidentally choose an incompatible command name, but it is NOT part of v1. Frontends should not implement it based on this section alone, and portable v1 macros must not depend on it.
@@ -525,6 +560,7 @@ This table is based on source review on 2026-05-28 (KlipperScreen, Mainsail, and
 | Markup | In KlipperScreen markup experiment | No | No | Yes |
 | Target filtering | No | No | No | Yes |
 | Prompt size (envelope) | No | No | No | Yes, incl. `full-screen` |
+| Per-item alignment (`prompt_align`) | No | In progress | No | Yes |
 | Equal-width-cells row/group layout convention | Unknown | Unknown | Unknown | Yes |
 | Explicit-dismissal-only dialog convention | Unknown | Unknown | Unknown | Yes |
 
