@@ -17,7 +17,7 @@ function freshIdle (epoch: number, opts: Required<EngineOptions>): PromptState {
     lifecycle: 'idle', epoch, title: '', size: null, activeTargets: ['all'],
     items: [], footerButtons: [], activeContainer: null,
     pendingTargets: null, pendingSize: null, opts
-  } as PromptState
+  } as unknown as PromptState
 }
 
 function targetsMatch (targets: string[], opts: Required<EngineOptions>): boolean {
