@@ -470,6 +470,20 @@ Rationale for deferral: prompt content is, by convention, presented in a promine
 
 If a future revision revisits this, it should define requirements and compatibility constraints before choosing command syntax.
 
+### Prompt inputs
+
+Discussed 2026-05-30 after reviewing the existing Mainsail experimental prompt-input work. `prompt_input` is reserved as a possible future optional extension so future designs do not accidentally choose an incompatible command name, but it is NOT part of v1. Frontends should not implement it based on this section alone, and portable v1 macros must not depend on it.
+
+Observed experimental Mainsail shape:
+
+```text
+prompt_input <label>|<macro-name>|<variable-name>|<default-value>|<placeholder>
+```
+
+The separating space after `prompt_input` matters for the existing line grammar; `prompt_input|...` would be parsed as the command name rather than as an input command with pipe-separated fields.
+
+Before promotion, a future revision should define at least: input lifecycle and submit timing, escaping/serialization for arbitrary user text, behavior when macro or variable names are missing or invalid, whether the frontend should write macro variables directly or emit a macro-authored gcode action, how multiple connected frontends race or synchronize edits, whether input values are visible in console history, and fallback behavior for frontends that ignore the command.
+
 ## Observed Current Support
 
 This table is based on source review on 2026-05-28 (KlipperScreen, Mainsail, and Fluidd upstream/current) plus the Fluidd reference implementation as of 2026-05-29. It should be corrected by maintainers if inaccurate.
