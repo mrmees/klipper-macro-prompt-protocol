@@ -43,7 +43,8 @@
     },
     {
       "id": "live-append-after-show",
-      "level": "core",
+      "level": "optional",
+      "extension": "live_append",
       "description": "Content after prompt_show appends to the visible prompt in source order.",
       "events": [
         "// action:prompt_begin Live Status",
@@ -77,7 +78,7 @@
         ]
       },
       "notes": [
-        "Mainsail currently snapshots content before prompt_show; this fixture represents the proposed core v1 behavior."
+        "Mainsail currently snapshots content before prompt_show; this fixture represents the optional v1 live-append capability."
       ]
     },
     {
@@ -447,6 +448,256 @@
       },
       "legacy_behavior": {
         "target_unaware_frontends_may_show_prompt": true
+      }
+    },
+    {
+      "id": "size-full-screen",
+      "level": "optional",
+      "extension": "prompt_size",
+      "description": "The full-screen size requests a viewport-filling dialog and is distinct from the text-size ladder.",
+      "events": [
+        "// action:prompt_size full-screen",
+        "// action:prompt_begin Kiosk Prompt",
+        "// action:prompt_text Take the whole screen.",
+        "// action:prompt_show"
+      ],
+      "expected": {
+        "visible": true,
+        "title": "Kiosk Prompt",
+        "size": "full-screen",
+        "targets": [
+          "all"
+        ],
+        "items": [
+          {
+            "type": "text",
+            "text": "Take the whole screen."
+          }
+        ],
+        "footer_buttons": []
+      },
+      "fallback_expected": {
+        "if_size_unsupported_render_at_frontend_default": true,
+        "if_full_screen_unsupported_may_render_at_largest_available_size": true
+      }
+    },
+    {
+      "id": "size-empty-uses-frontend-default",
+      "level": "optional",
+      "extension": "prompt_size",
+      "description": "An empty prompt_size argument clears any explicit size hint and uses the frontend default.",
+      "events": [
+        "// action:prompt_size",
+        "// action:prompt_begin Empty Size",
+        "// action:prompt_text Normalized.",
+        "// action:prompt_show"
+      ],
+      "expected": {
+        "visible": true,
+        "title": "Empty Size",
+        "size": null,
+        "targets": [
+          "all"
+        ],
+        "items": [
+          {
+            "type": "text",
+            "text": "Normalized."
+          }
+        ],
+        "footer_buttons": []
+      }
+    },
+    {
+      "id": "size-unknown-token-uses-frontend-default",
+      "level": "optional",
+      "extension": "prompt_size",
+      "description": "An unknown prompt_size token clears any explicit size hint and uses the frontend default.",
+      "events": [
+        "// action:prompt_size jumbo",
+        "// action:prompt_begin Unknown Size",
+        "// action:prompt_text Normalized.",
+        "// action:prompt_show"
+      ],
+      "expected": {
+        "visible": true,
+        "title": "Unknown Size",
+        "size": null,
+        "targets": [
+          "all"
+        ],
+        "items": [
+          {
+            "type": "text",
+            "text": "Normalized."
+          }
+        ],
+        "footer_buttons": []
+      }
+    },
+    {
+      "id": "size-case-normalizes",
+      "level": "optional",
+      "extension": "prompt_size",
+      "description": "prompt_size values are matched case-insensitively; uppercase LARGE becomes large.",
+      "events": [
+        "// action:prompt_size LARGE",
+        "// action:prompt_begin Case Insensitive",
+        "// action:prompt_text Mixed case.",
+        "// action:prompt_show"
+      ],
+      "expected": {
+        "visible": true,
+        "title": "Case Insensitive",
+        "size": "large",
+        "targets": [
+          "all"
+        ],
+        "items": [
+          {
+            "type": "text",
+            "text": "Mixed case."
+          }
+        ],
+        "footer_buttons": []
+      }
+    },
+    {
+      "id": "size-last-wins-before-begin",
+      "level": "optional",
+      "extension": "prompt_size",
+      "description": "Multiple prompt_size commands before prompt_begin use the last value.",
+      "events": [
+        "// action:prompt_size small",
+        "// action:prompt_size large",
+        "// action:prompt_size x-large",
+        "// action:prompt_begin Last Wins",
+        "// action:prompt_text Sized x-large.",
+        "// action:prompt_show"
+      ],
+      "expected": {
+        "visible": true,
+        "title": "Last Wins",
+        "size": "x-large",
+        "targets": [
+          "all"
+        ],
+        "items": [
+          {
+            "type": "text",
+            "text": "Sized x-large."
+          }
+        ],
+        "footer_buttons": []
+      }
+    },
+    {
+      "id": "size-applies-to-next-begin-not-current",
+      "level": "optional",
+      "extension": "prompt_size",
+      "description": "A prompt_size emitted during an active prompt applies only to the next prompt_begin, not the current one.",
+      "events": [
+        "// action:prompt_begin First",
+        "// action:prompt_text First was sized normal at begin.",
+        "// action:prompt_show",
+        "// action:prompt_size x-large",
+        "// action:prompt_begin Second",
+        "// action:prompt_text Pending size carried across to Second.",
+        "// action:prompt_show"
+      ],
+      "expected": {
+        "visible": true,
+        "title": "Second",
+        "size": "x-large",
+        "targets": [
+          "all"
+        ],
+        "items": [
+          {
+            "type": "text",
+            "text": "Pending size carried across to Second."
+          }
+        ],
+        "footer_buttons": []
+      },
+      "notes": [
+        "First prompt opened at the default 'normal' size; the prompt_size x-large emitted during First's lifetime did not affect First's size. The Second prompt replaces First and consumes the pending x-large value."
+      ]
+    },
+    {
+      "id": "size-end-clears-pending",
+      "level": "optional",
+      "extension": "prompt_size",
+      "description": "prompt_end clears a pending prompt_size before the next prompt begins.",
+      "events": [
+        "// action:prompt_size x-large",
+        "// action:prompt_end",
+        "// action:prompt_begin Clean Baseline",
+        "// action:prompt_text No pending size survived prompt_end.",
+        "// action:prompt_show"
+      ],
+      "expected": {
+        "visible": true,
+        "title": "Clean Baseline",
+        "size": null,
+        "targets": [
+          "all"
+        ],
+        "items": [
+          {
+            "type": "text",
+            "text": "No pending size survived prompt_end."
+          }
+        ],
+        "footer_buttons": []
+      }
+    },
+    {
+      "id": "size-consumed-when-target-suppressed",
+      "level": "optional",
+      "extension": "prompt_size",
+      "description": "A pending prompt_size is consumed by the next prompt_begin even when that prompt is suppressed by prompt_target.",
+      "events": [
+        "// action:prompt_target klipperscreen",
+        "// action:prompt_size x-large",
+        "// action:prompt_begin Hidden From Fluidd",
+        "// action:prompt_text This prompt is target-suppressed for Fluidd.",
+        "// action:prompt_show",
+        "// action:prompt_begin Visible Default",
+        "// action:prompt_text The suppressed prompt consumed the pending size.",
+        "// action:prompt_show"
+      ],
+      "expected_by_frontend": {
+        "fluidd": {
+          "visible": true,
+          "title": "Visible Default",
+          "size": null,
+          "targets": [
+            "all"
+          ],
+          "items": [
+            {
+              "type": "text",
+              "text": "The suppressed prompt consumed the pending size."
+            }
+          ],
+          "footer_buttons": []
+        },
+        "klipperscreen": {
+          "visible": true,
+          "title": "Visible Default",
+          "size": null,
+          "targets": [
+            "all"
+          ],
+          "items": [
+            {
+              "type": "text",
+              "text": "The suppressed prompt consumed the pending size."
+            }
+          ],
+          "footer_buttons": []
+        }
       }
     },
     {

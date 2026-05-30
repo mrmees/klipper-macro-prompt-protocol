@@ -26,9 +26,14 @@ Each fixture has:
 
 - `events`: ordered action messages to replay;
 - `expected`: final state after all events are processed by a spec-compatible frontend;
+- `expected_by_frontend`: optional frontend-specific expected states when target filtering changes visibility;
 - `notes`: compatibility details that may matter during implementation.
 
-The expected shape is deliberately renderer-neutral. A GTK dialog, Vuetify dialog, or other UI does not need to match visual dimensions. It does need to preserve prompt state, item order, command parsing, fallback values, targeting decisions, and graceful degradation.
+The expected shape is deliberately renderer-neutral. A GTK dialog, Vuetify dialog, or other UI does not need to match visual dimensions. It does need to preserve prompt state, item order, command parsing, fallback values, targeting decisions, and graceful degradation. `SPEC.md` defines the normalized fixture state; frontends do not need to use that shape internally, but their parser/reducer output must be comparable to it for conformance tests. Core conformance requires core fixtures; optional fixtures apply only when the implementation claims the corresponding extension.
+
+## Schema Versioning
+
+`schema_version: 1` allows additive optional fields in `expected`. Implementations consuming fixtures must ignore unknown fields they do not yet support, and treat absent fields as "not asserted by this fixture" — not as "must equal default". When a fixture needs to assert "no explicit size hint / frontend default", it uses `size: null`. This lets the fixture pack grow alongside new optional extensions (`prompt_size`, future hints) without forcing a major schema bump every time the protocol gains a per-prompt metadata field. A schema_version bump is reserved for breaking shape changes such as renamed required fields, removed fields, or changes in event-stream interpretation.
 
 ## Image Assets
 
