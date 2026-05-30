@@ -157,8 +157,7 @@
     },
     {
       "id": "button-group",
-      "level": "optional",
-      "extension": "button_groups",
+      "level": "core",
       "description": "Grouped content buttons preserve button order and grouping.",
       "events": [
         "// action:prompt_begin Jog Distance",
@@ -208,9 +207,6 @@
           }
         ],
         "footer_buttons": []
-      },
-      "fallback_expected": {
-        "items_render_in_source_order": true
       }
     },
     {

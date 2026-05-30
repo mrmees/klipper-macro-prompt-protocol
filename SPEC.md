@@ -43,9 +43,9 @@ Each command is one line. Command arguments are UTF-8 text, and frontends must n
 
 The proposal separates the base agreement from richer optional features so maintainers can adopt the protocol in stages.
 
-Core v1 conformance covers the transport, core commands, lifecycle through `prompt_show`, button parsing, button execution, semantic styles, disconnect behavior, and graceful handling of unknown commands.
+Core v1 conformance covers the transport, core commands, lifecycle through `prompt_show`, button parsing, button groups, button execution, semantic styles, disconnect behavior, and graceful handling of unknown commands.
 
-Optional v1 extensions cover live appends after `prompt_show`, targeting, prompt size, button groups, rows, images, and PromptMarkup. These are part of the shared direction, but they should not block agreement on the core protocol.
+Optional v1 extensions cover live appends after `prompt_show`, targeting, prompt size, rows, images, and PromptMarkup. These are part of the shared direction, but they should not block agreement on the core protocol.
 
 ## Core Commands
 
@@ -56,11 +56,13 @@ prompt_begin <title>
 prompt_text <text>
 prompt_button <label>|<gcode>|<style>
 prompt_footer_button <label>|<gcode>|<style>
+prompt_button_group_start
+prompt_button_group_end
 prompt_show
 prompt_end
 ```
 
-`prompt_begin` starts a prompt and clears any existing prompt state. `prompt_text` appends a plain text block. `prompt_button` appends a content button. `prompt_footer_button` appends a footer/action button. `prompt_show` opens the current prompt. `prompt_end` closes and clears it.
+`prompt_begin` starts a prompt and clears any existing prompt state. `prompt_text` appends a plain text block. `prompt_button` appends a content button. `prompt_footer_button` appends a footer/action button. Button group commands mark adjacent content buttons as related. `prompt_show` opens the current prompt. `prompt_end` closes and clears it.
 
 ## Optional v1 Extensions
 
@@ -69,8 +71,6 @@ Unsupported extension commands must be ignored without breaking the prompt.
 ```text
 prompt_target <targets>
 prompt_size <size>
-prompt_button_group_start
-prompt_button_group_end
 prompt_row_start
 prompt_row_end
 prompt_image <config-path>|<alt-text>|<scale>
@@ -378,9 +378,9 @@ prompt_button -10|_MOVE_MINUS_10|secondary
 prompt_button_group_end
 ```
 
-Supporting frontends render grouped buttons together. Unsupported frontends ignore group commands and still render contained buttons in source order.
+Frontends render grouped buttons together while preserving the source order of the contained buttons.
 
-Supporting frontends are recommended to render grouped buttons with consistent equal-width sizing across the group. This convention improves consistency on clients that adopt it — a `+10 / +1 / -1 / -10` jog cluster reads as one unit of related controls. Portable prompts must remain usable if a frontend chooses a different layout. Frontends with strong local conventions may deviate.
+Frontends are recommended to render grouped buttons with consistent equal-width sizing across the group. This convention improves consistency on clients that adopt it — a `+10 / +1 / -1 / -10` jog cluster reads as one unit of related controls. Portable prompts must remain usable if a frontend chooses a different layout. Frontends with strong local conventions may deviate.
 
 Button groups must not be nested. Button groups and rows must not be nested inside each other in v1. If invalid nesting occurs, frontends may ignore inner grouping commands while preserving the contained content items in source order.
 
@@ -414,7 +414,7 @@ Keep button labels short. Always use explicit `label|gcode|style` for portable b
 
 Put prompt assets under `config/images/` or `config/prompt-assets/`. Provide alt text for important images.
 
-Design prompts so they still make sense if images, markup, rows, scaling, button groups, or targeting are unsupported.
+Design prompts so they still make sense if images, markup, rows, scaling, or targeting are unsupported.
 
 Use `prompt_target` only as forward-compatible filtering. Older frontends may still show the prompt.
 
@@ -466,7 +466,7 @@ This table is based on source review on 2026-05-28 (KlipperScreen, Mainsail, and
 
 | Feature | KlipperScreen current | Mainsail current | Fluidd current | Fluidd reference branch |
 | --- | --- | --- | --- | --- |
-| Core prompt commands | Yes | Yes | Yes | Yes |
+| Base prompt lifecycle and buttons | Yes | Yes | Yes | Yes |
 | Live appends after `prompt_show` | Yes | No, snapshot on show | Yes | Yes |
 | Button groups | Yes | Yes | No | Yes |
 | Rows | In KlipperScreen markup experiment | No | No | Yes |
@@ -477,6 +477,8 @@ This table is based on source review on 2026-05-28 (KlipperScreen, Mainsail, and
 | Prompt size (envelope) | No | No | No | Yes, incl. `full-screen` |
 | Equal-width-cells row/group layout convention | Unknown | Unknown | Unknown | Yes |
 | Explicit-dismissal-only dialog convention | Unknown | Unknown | Unknown | Yes |
+
+Because button groups are now part of core v1, current Fluidd would need button-group support before claiming v1 core conformance.
 
 The Fluidd reference implementation lives on `mrmees/fluidd` branch `feat/macro-prompt-protocol-v1`. It implements core v1, all optional v1 extensions, and `prompt_size`. It is not (yet) proposed for merge into upstream `fluidd`.
 
@@ -499,6 +501,6 @@ The issue should focus on the shared spec first, not code changes. The asks are:
 - Confirm the compatibility table.
 - Identify behavior changes each frontend would need.
 - Agree on core vs optional commands.
-- Agree on ambiguity fixes: lifecycle, live-append capability level, button defaults, pipe reservation, image fields, image path scope, markup grammar, row semantics, targeting, prompt size, dismissal semantics, equal-width-cells layout convention for rows/button_groups, normalized fixture state, and the recommended restart-resumption pattern via `[delayed_gcode]`.
+- Agree on ambiguity fixes: lifecycle, live-append capability level, button defaults, button-group semantics, pipe reservation, image fields, image path scope, markup grammar, row semantics, targeting, prompt size, dismissal semantics, equal-width-cells layout convention for rows and button groups, normalized fixture state, and the recommended restart-resumption pattern via `[delayed_gcode]`.
 
 After maintainers agree on the spec, each frontend can open implementation PRs against its own codebase.
