@@ -125,6 +125,8 @@ Style:
 
 `markup` preserves the raw PromptMarkup string. `plain_text` is the decoded fallback text for clients that do not render rich text. The normalized state deliberately excludes implementation-only fields such as renderer keys, stable item IDs, reducer machine state, and parsed markup ASTs.
 
+Implementations that expose this normalized shape to renderers should treat it as an immutable snapshot boundary: consumer mutations to returned items, rows, button groups, or footer buttons must not alter reducer state. JavaScript integrations should verify that their target browser or WebView supports any clone primitive used at that boundary, such as `structuredClone`, or provide a plain-object clone fallback.
+
 ## Lifecycle
 
 `prompt_begin` starts a new prompt definition. If a prompt is already being built or displayed, the new prompt replaces it. Prompt content commands received before `prompt_begin` are ignored, except for `prompt_target` and `prompt_size`, which both apply to the next prompt.
