@@ -242,6 +242,8 @@ prompt_button Do thing|_PROMPT_DO_THING|primary
 
 Pressing a button sends its configured gcode and does not automatically close the prompt. If a button should close the prompt, its gcode should emit `action:prompt_end` directly or call a helper macro that does.
 
+Content buttons expand to fill the available width of their cell or container; frontends should not size a button to its label text. Inside a `row` or `button_group`, this means each button fills its equal-width cell, so a row of buttons reads as a balanced set of equal-width controls. (Footer buttons are sized by their action bar, not by this rule.)
+
 Footer buttons render in an action bar visually separated from prompt content. Their relative order is preserved.
 
 The frontend close control sends:
