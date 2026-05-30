@@ -4,6 +4,7 @@ export type PromptStyle = 'primary' | 'secondary' | 'info' | 'warning' | 'error'
 export type PromptTextSize = 'small' | 'normal' | 'large' | 'x-large'
 export type PromptSize = PromptTextSize | 'full-screen'
 export type PromptAlign = 'left' | 'center' | 'right'
+export type PromptItemAlign = Exclude<PromptAlign, 'center'>
 
 // ---- Canonical semantic view (== conformance == interop shape) -------------
 export interface PromptView {
@@ -16,12 +17,12 @@ export interface PromptView {
 }
 
 export type PromptItem =
-  | { type: 'text'; text: string; align?: PromptAlign }
-  | { type: 'markup'; markup: string; plain_text: string; align?: PromptAlign }
-  | { type: 'image'; path: string; alt: string; scale: number | null; align?: PromptAlign }
-  | { type: 'button'; label: string; gcode: string; style: PromptStyle; align?: PromptAlign }
-  | { type: 'row'; children: PromptInlineItem[]; align?: PromptAlign }
-  | { type: 'button_group'; children: PromptButtonItem[]; align?: PromptAlign }
+  | { type: 'text'; text: string; align?: PromptItemAlign }
+  | { type: 'markup'; markup: string; plain_text: string; align?: PromptItemAlign }
+  | { type: 'image'; path: string; alt: string; scale: number | null; align?: PromptItemAlign }
+  | { type: 'button'; label: string; gcode: string; style: PromptStyle; align?: PromptItemAlign }
+  | { type: 'row'; children: PromptInlineItem[]; align?: PromptItemAlign }
+  | { type: 'button_group'; children: PromptButtonItem[]; align?: PromptItemAlign }
 
 export type PromptButtonItem = { type: 'button'; label: string; gcode: string; style: PromptStyle }
 export type PromptInlineItem =
