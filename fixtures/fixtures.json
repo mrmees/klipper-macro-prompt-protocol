@@ -740,6 +740,47 @@
         "items": [],
         "footer_buttons": []
       }
+    },
+    {
+      "id": "disconnect-clears-active-prompt",
+      "level": "core",
+      "description": "A disconnect event clears the shown prompt and pending metadata.",
+      "events": [
+        "// action:prompt_size large",
+        "// action:prompt_begin Working",
+        "// action:prompt_text Heating",
+        "// action:prompt_show",
+        "__disconnect__"
+      ],
+      "expected": {
+        "visible": false,
+        "title": "",
+        "targets": ["all"],
+        "items": [],
+        "footer_buttons": []
+      }
+    },
+    {
+      "id": "stray-row-end-ignored",
+      "level": "core",
+      "description": "A row_end with no open row is ignored; content still renders in order.",
+      "events": [
+        "// action:prompt_begin Stray",
+        "// action:prompt_text One",
+        "// action:prompt_row_end",
+        "// action:prompt_text Two",
+        "// action:prompt_show"
+      ],
+      "expected": {
+        "visible": true,
+        "title": "Stray",
+        "targets": ["all"],
+        "items": [
+          { "type": "text", "text": "One" },
+          { "type": "text", "text": "Two" }
+        ],
+        "footer_buttons": []
+      }
     }
   ]
 }

@@ -125,6 +125,8 @@ Style:
 
 `markup` preserves the raw PromptMarkup string. `plain_text` is the decoded fallback text for clients that do not render rich text. The normalized state deliberately excludes implementation-only fields such as renderer keys, stable item IDs, reducer machine state, and parsed markup ASTs.
 
+Implementations that expose this normalized shape to renderers should treat it as an immutable snapshot boundary: consumer mutations to returned items, rows, button groups, or footer buttons must not alter reducer state. JavaScript integrations should verify that their target browser or WebView supports any clone primitive used at that boundary, such as `structuredClone`, or provide a plain-object clone fallback.
+
 ## Lifecycle
 
 `prompt_begin` starts a new prompt definition. If a prompt is already being built or displayed, the new prompt replaces it. Prompt content commands received before `prompt_begin` are ignored, except for `prompt_target` and `prompt_size`, which both apply to the next prompt.
@@ -140,6 +142,12 @@ Live appends after `prompt_show` are an optional v1 capability. The portable cor
 There is no v1 command to remove or replace an individual item. To replace prompt content, emit a new `prompt_begin` and rebuild the prompt.
 
 Frontends must close active prompts on Klipper or Moonraker disconnect.
+
+Disconnect is modeled as an explicit reset, distinct from `prompt_end`: it clears the active prompt,
+any pending `prompt_target`/`prompt_size`, and any open `row`/`button_group` container, returning the
+prompt to the idle, visible-to-all baseline. Reconnect recovery is reset-then-replay: a frontend
+rebuilds prompt state from buffered console history starting from a fresh state, never by diffing
+against retained state.
 
 User-initiated dismissal must come from an explicit action on the prompt itself: a dedicated close control (such as a close button on the prompt's own chrome) or a footer button whose gcode emits `prompt_end`. Frontends must not broadcast `prompt_end` as a side effect of unrelated UI events, such as the Escape key closing a different modal, a backdrop click on an adjacent dialog, or routing changes that close other application chrome. Because `prompt_end` is broadcast to all connected clients, accidental dismissal on one frontend would close the prompt on every other connected frontend. Supporting frontends should prefer persistent/modal dialog implementations that require explicit user action to dismiss.
 
@@ -363,7 +371,9 @@ Supporting frontends are recommended to render row items as equal-width cells wi
 
 Unsupported row commands are ignored; contained items render in source order as normal block items. Rows may contain plain text, markup, images, and inline buttons. Footer buttons remain outside rows.
 
-Rows must not be nested. Rows and button groups must not be nested inside each other in v1. If invalid nesting occurs, frontends may ignore inner grouping commands while preserving the contained content items in source order.
+Rows must not be nested. Rows and button groups must not be nested inside each other in v1. Malformed container commands degrade deterministically: a `row_end` or `button_group_end` with no
+matching open container is ignored; a `row_start`/`button_group_start` while a container is already
+open is ignored (its inner content items still append to the already-open container, in source order).
 
 ## Button Groups
 
