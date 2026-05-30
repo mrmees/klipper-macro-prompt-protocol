@@ -354,6 +354,18 @@ simple_tag  = "<" ("b" | "i" | "u") ">" markup "</" same-name ">"
 value_tag   = "<" ("color" | "bgcolor" | "size") ":" value ">" markup "</" same-name ">"
 ```
 
+## Alignment and Layout Defaults
+
+Individual prompt items — text, markup, images, and content buttons — default to **centered** horizontal alignment within the dialog. Frontends SHOULD center item content, and macros may rely on this default rather than specifying alignment.
+
+Layout features change the arrangement *within* that centered default, and are the only v1 mechanisms that do so:
+
+- `prompt_row_*` lays its children out as equal-width cells with content centered within each cell (see Rows).
+- `prompt_button_group_*` lays grouped buttons out as equal-width cells (see Button Groups).
+- Footer buttons (`prompt_footer_button`) render in a separate action bar, outside the centered content flow (see Button Parsing and Behavior).
+
+Vertical alignment and overall dialog placement are frontend/display conventions and are not specified by v1. A future `prompt_align` extension (see Future Considerations) may add per-item horizontal control; until it exists, centered is the assumed default and portable macros must not depend on any other per-item alignment.
+
 ## Rows
 
 Rows group prompt content onto one line:
@@ -466,7 +478,7 @@ The following ideas were discussed during initial design and deferred from v1. T
 
 Discussed 2026-05-29 during the Fluidd reference implementation design and deferred. Frontends should NOT implement this based on this section; it is design context only, not a forward commitment.
 
-Rationale for deferral: prompt content is, by convention, presented in a prominent display context that already defaults to centered horizontal and vertical alignment for individual items. The motivating use case — fine-grained per-item layout polish — is therefore not a generally-felt pain. When macro authors do need richer composition (e.g., a label-then-value horizontal layout, or padding to push content into a particular cell), the existing `row` primitive composes naturally: multiple rows, padded with empty-string text items or blank images, give authors layout control without protocol surface growth. Authors who want that level of polish are also the authors most willing to spend effort composing it from existing primitives.
+Rationale for deferral: per Alignment and Layout Defaults, individual items already default to centered alignment, so the motivating use case — fine-grained per-item layout polish — is not a generally-felt pain. When macro authors do need richer composition (e.g., a label-then-value horizontal layout, or padding to push content into a particular cell), the existing `row` primitive composes naturally: multiple rows, padded with empty-string text items or blank images, give authors layout control without protocol surface growth. Authors who want that level of polish are also the authors most willing to spend effort composing it from existing primitives.
 
 If a future revision revisits this, it should define requirements and compatibility constraints before choosing command syntax.
 
