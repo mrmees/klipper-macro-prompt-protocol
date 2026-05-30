@@ -3,6 +3,7 @@
 export type PromptStyle = 'primary' | 'secondary' | 'info' | 'warning' | 'error' | 'success'
 export type PromptTextSize = 'small' | 'normal' | 'large' | 'x-large'
 export type PromptSize = PromptTextSize | 'full-screen'
+export type PromptAlign = 'left' | 'center' | 'right'
 
 // ---- Canonical semantic view (== conformance == interop shape) -------------
 export interface PromptView {
@@ -15,12 +16,12 @@ export interface PromptView {
 }
 
 export type PromptItem =
-  | { type: 'text'; text: string }
-  | { type: 'markup'; markup: string; plain_text: string }
-  | { type: 'image'; path: string; alt: string; scale: number | null }
-  | { type: 'button'; label: string; gcode: string; style: PromptStyle }
-  | { type: 'row'; children: PromptInlineItem[] }
-  | { type: 'button_group'; children: PromptButtonItem[] }
+  | { type: 'text'; text: string; align?: PromptAlign }
+  | { type: 'markup'; markup: string; plain_text: string; align?: PromptAlign }
+  | { type: 'image'; path: string; alt: string; scale: number | null; align?: PromptAlign }
+  | { type: 'button'; label: string; gcode: string; style: PromptStyle; align?: PromptAlign }
+  | { type: 'row'; children: PromptInlineItem[]; align?: PromptAlign }
+  | { type: 'button_group'; children: PromptButtonItem[]; align?: PromptAlign }
 
 export type PromptButtonItem = { type: 'button'; label: string; gcode: string; style: PromptStyle }
 export type PromptInlineItem =
@@ -50,6 +51,7 @@ export type PromptEvent =
   | { kind: 'button_group_start' } | { kind: 'button_group_end' }
   | { kind: 'target'; targets: string[] }
   | { kind: 'size'; size: PromptSize | null }
+  | { kind: 'align'; align: PromptAlign | null }
   | { kind: 'show' } | { kind: 'end' } | { kind: 'disconnect' }
 
 export interface EngineOptions {
@@ -74,5 +76,6 @@ export interface PromptStateData {
   activeContainer: 'row' | 'button_group' | null
   pendingTargets: string[] | null
   pendingSize: PromptSize | null
+  currentAlign: PromptAlign
   opts: Required<EngineOptions>
 }
