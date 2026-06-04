@@ -1,0 +1,79 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-06-03T20:55:57-05:00",
+  "phase": null,
+  "phase_name": null,
+  "phase_dir": null,
+  "plan": null,
+  "task": null,
+  "total_tasks": 0,
+  "status": "paused",
+  "completed_tasks": [
+    {
+      "id": 1,
+      "name": "Merge centered alignment defaults into standard",
+      "status": "done",
+      "commit": "0dd3333"
+    },
+    {
+      "id": 2,
+      "name": "Merge prompt_align optional v1 extension into standard and JS reference engine",
+      "status": "done",
+      "commit": "d6cc0d9"
+    }
+  ],
+  "remaining_tasks": [
+    {
+      "id": 3,
+      "name": "Compare actual Mainsail and Fluidd live append behavior and update protocol notes",
+      "status": "not_started"
+    },
+    {
+      "id": 4,
+      "name": "Review frontend implementation implications for Fluidd, Mainsail, and KlipperScreen against current v1 spec",
+      "status": "not_started"
+    }
+  ],
+  "blockers": [
+    {
+      "description": "No technical blocker. External-repo posting or code changes require explicit user approval under the 3-confirmation rule.",
+      "type": "human_action",
+      "workaround": "Do read-only review of third-party repos unless the user explicitly confirms posting or changing code."
+    }
+  ],
+  "human_actions_pending": [
+    {
+      "action": "Provide explicit approval before any comments or code changes in repos not owned by the user.",
+      "context": "The user clarified that the 3-time confirmation rule applies to posting anything in third-party repos.",
+      "blocking": true
+    }
+  ],
+  "decisions": [
+    {
+      "decision": "Default top-level prompt item alignment is centered.",
+      "rationale": "Needed for portable prompt rendering across Fluidd, Mainsail, and KlipperScreen.",
+      "phase": null
+    },
+    {
+      "decision": "prompt_align belongs in v1 as an optional extension, not future work.",
+      "rationale": "Alignment is fundamental enough for macro authors and observed frontend behavior to standardize now.",
+      "phase": null
+    },
+    {
+      "decision": "Normalized item output omits align for center and only emits left/right.",
+      "rationale": "Keeps existing prompts and fixtures backwards-compatible while making non-default alignment explicit.",
+      "phase": null
+    },
+    {
+      "decision": "prompt_input remains reserved future work, not v1.",
+      "rationale": "Existing Mainsail experimental shape has unresolved lifecycle, escaping, validation, and multi-frontend issues.",
+      "phase": null
+    }
+  ],
+  "uncommitted_files": [
+    ".planning/HANDOFF.json",
+    ".planning/.continue-here.md"
+  ],
+  "next_action": "Start by comparing Mainsail and Fluidd live append behavior, especially how each handles actions appended after prompt_show and whether content is live-rendered, buffered, ignored, or requires a new prompt.",
+  "context_notes": "Repo main is current at d6cc0d9. All owned PRs are merged. Project goals remain wide support across Fluidd, Mainsail, and KlipperScreen plus backwards compatibility with existing prompt macros."
+}
